@@ -5,6 +5,7 @@ public class rotate_move_block : MonoBehaviour
 {
 
     Transform m_transform;
+    Rigidbody2D m_rigidbody2d;
 
     [SerializeField]
     private float m_radius = 1f;

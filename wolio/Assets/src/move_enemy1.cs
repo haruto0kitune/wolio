@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 using System.Collections;
 
 public class move_enemy1 : MonoBehaviour

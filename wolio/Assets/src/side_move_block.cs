@@ -5,6 +5,7 @@ public class side_move_block : MonoBehaviour
 {
 
     Transform m_transform;
+    Rigidbody2D m_rigidbody2d;
 
     [SerializeField]
     private float m_speed = 0.01f;
@@ -14,6 +15,7 @@ public class side_move_block : MonoBehaviour
     void Start()
     {
         m_transform = GetComponent<Transform>();
+        m_rigidbody2d = GetComponent<Rigidbody2D>();
         StartCoroutine("Move");
     }
 

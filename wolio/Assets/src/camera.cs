@@ -1,27 +1,24 @@
 ﻿using UnityEngine;
+using UniRx;
+using UniRx.Triggers;
 using System.Collections;
 
-public class camera : MonoBehaviour {
+public class camera : MonoBehaviour
+{
+    // Player sprite
+    [SerializeField]
+    private GameObject player;
 
-    public GameObject player;
+    // Use this for initialization
+    void Start()
+    {
+        this.UpdateAsObservable()
+            .Subscribe(_ =>
+            {
+                this.transform.position = new Vector3(player.transform.position.x, 0, -10);
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-        transform.position = new Vector3(player.transform.position.x, 0, -10);
-
-        if (transform.position.x < 0)
-        {
-            transform.position = new Vector3(0, 0, -10);
-        }
-
-        if (transform.position.x >= 12)
-        {
-            transform.position = new Vector3(12, 0, -10);
-        }
+                if (transform.position.x < 0) transform.position = new Vector3(0, 0, -10);
+                else if (transform.position.x >= 12) transform.position = new Vector3(12, 0, -10);
+            });
     }
 }
