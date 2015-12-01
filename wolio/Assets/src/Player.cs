@@ -8,22 +8,23 @@ using UnityStandardAssets.CrossPlatformInput;
 public class Player : MonoBehaviour
 {
     public int m_hp = 1;
-    public string m_Direction = "right";
-    public LayerMask m_ground; 
+    private int m_shotwait;
 
-    private int OnTriggerEnter2DOverlap = 0;
-    private PlayerControl m_playercontrol;
+    public GameObject shot;
+    public GameObject prefav;
     private Transform m_GroundCheck;    // A position marking where to check if the player is grounded.
-    private Transform m_CeilingCheck;   // A position marking where to check for ceilings
     private Transform m_transform;
     private Rigidbody2D m_Rigidbody2D;
-    private bool m_Grounded;            // Whether or not the player is grounded.
+    public bool m_Grounded = false;            // Whether or not the player is grounded.
     private bool m_FacingRight = true;  // For determining which way the player is currently facing.
     const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
     const float k_CeilingRadius = .01f; // Radius of the overlap circle to determine if the player can stand up
+    public bool m_isDashing = false;
 
     [SerializeField]
     private float m_MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
+    [SerializeField]
+    private float m_DashSpeed = 10f;                    
     [SerializeField]
     private float m_JumpForce = 400f;                  // Amount of force added when the player jumps.
     [SerializeField]
@@ -34,8 +35,6 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         m_GroundCheck = transform.Find("GroundCheck");
-        m_CeilingCheck = transform.Find("CeilingCheck");
-        m_playercontrol = GetComponent<PlayerControl>();
         m_Rigidbody2D = GetComponent<Rigidbody2D>();
         m_transform = GetComponent<Transform>();
     }
@@ -43,16 +42,35 @@ public class Player : MonoBehaviour
     private void Start()
     {
         UpdateAsObservables();
+        FixedUpdateAsObservables();
         OnTriggerEnter2DAsObservables();
         OnTriggerStay2DAsObservables();
         OnTriggerExit2DAsObservables();
         ObserveEveryValueChangeds();
     }
 
+    void FixedUpdateAsObservables()
+    {
+        this.FixedUpdateAsObservable()
+            .Subscribe(_ =>
+            {
+                m_Grounded = false;
+
+                // The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
+                // This can be done using layers instead but Sample Assets will not overwrite your project settings.
+                Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, m_WhatIsGround);
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    if (colliders[i].gameObject != gameObject)
+                        m_Grounded = true;
+                }
+            });
+    }
+
     void UpdateAsObservables ()
     {
-        this.UpdateAsObservable()
-            .Subscribe(_ => m_Grounded = Physics2D.Linecast(this.transform.position, m_GroundCheck.transform.position));
+        //this.UpdateAsObservable()
+        //    .Subscribe(_ => m_Grounded = Physics2D.Linecast(this.transform.position, m_GroundCheck.transform.position));
     }
 
     void OnTriggerEnter2DAsObservables ()
@@ -117,69 +135,102 @@ public class Player : MonoBehaviour
             .Subscribe(_ => Destroy(GameObject.Find("hp1")));
     }
 
-    public IEnumerator Backstep(bool left, bool right, bool shift)
+    public void Dash(float direction, bool shift)
     {
-        if (m_Direction == "left")
+        if ((shift && ((direction < 0) || (direction > 0))) && !m_isDashing)
         {
-            if (shift && right)
+            StartCoroutine(DashCoroutine(direction, shift));
+        }
+    }
+
+    public IEnumerator DashCoroutine(float direction, bool shift)
+    {
+        m_isDashing = true;
+
+        //right backdash
+        if (m_FacingRight && ((direction < 0) && shift))
+        {
+            for (int i = 0; i < 5; i++)
             {
-                for (int i = 0; i < 5; i++)
-                {
-                    m_transform.Translate(Vector3.right * 0.1f);
-                    yield return null;
-                }
+                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
+                yield return null;
             }
         }
-        else if (m_Direction == "right")
+        //right frontdash
+        else if (m_FacingRight && ((direction > 0) && shift))
         {
-            if (shift && left)
+            for (int i = 0; i < 5; i++)
             {
-                for (int i = 0; i < 5; i++)
-                {
-                    m_transform.Translate(Vector3.left * 0.1f);
-                    yield return null;
-                }
+                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
+                yield return null;
+            }
+        }
+        //left frontdash
+        else if (!m_FacingRight && ((direction < 0) && shift))
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i), m_Rigidbody2D.velocity.y);
+                yield return null;
+            }
+        }
+        //left backdash
+        else if (!m_FacingRight && ((direction > 0) && shift))
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i), m_Rigidbody2D.velocity.y);
+                yield return null;
             }
         }
 
         // wait for 5 frames.
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 23; i++)
         {
             yield return null;
         }
+
+        m_isDashing = false;
+        yield return null;
     }
 
-    public void Move(float move, bool jump)
+    public void TurnAround(float direction)
+    {
+        if ((direction > 0 && !m_FacingRight) || (direction < 0 && m_FacingRight))
+        {
+            Flip();
+        }
+    }
+
+    public void Run(float direction)
     {
         //only control the player if grounded or airControl is turned on
         if (m_Grounded || m_AirControl)
         {
-            // Reduce the speed if crouching by the crouchSpeed multiplier
-            if (move > 0) m_Direction = "right";
-            if (move < 0) m_Direction = "left";
-
             // Move the character
-            m_Rigidbody2D.velocity = new Vector2(move * m_MaxSpeed, m_Rigidbody2D.velocity.y);
-
-            // If the input is moving the player right and the player is facing left...
-            if (CrossPlatformInputManager.GetAxisRaw("Horizontal") > 0 && !m_FacingRight)
-            {
-                // ... flip the player.
-                Flip();
-            }
-            // Otherwise if the input is moving the player left and the player is facing right...
-            else if (CrossPlatformInputManager.GetAxisRaw("Horizontal") < 0 && m_FacingRight)
-            {
-                // ... flip the player.
-                Flip();
-            }
+            m_Rigidbody2D.velocity = new Vector2(direction * m_MaxSpeed, m_Rigidbody2D.velocity.y);
         }
+    }
+
+    public void Jump(bool jump)
+    {
         // If the player should jump...
-        if ((bool)Physics2D.Linecast(this.transform.position, new Vector2(this.transform.position.x, this.transform.position.y - 0.539f), m_ground) && jump)
+        if ((bool)Physics2D.Linecast(this.transform.position, new Vector2(this.transform.position.x, this.transform.position.y - 0.539f), /*m_ground*/m_WhatIsGround) && jump)
         {
             // Add a vertical force to the player.
             m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
         }
+    }
+
+    public void FireBall()
+    {
+        if (m_shotwait % 5 == 0)
+        {
+            prefav = Instantiate(shot, transform.position, transform.rotation) as GameObject;
+            m_shotwait = 0;
+        }
+
+        m_shotwait++;
     }
 
     private void Flip()
