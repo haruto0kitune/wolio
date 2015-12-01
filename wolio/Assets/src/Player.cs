@@ -224,7 +224,7 @@ public class Player : MonoBehaviour
 
     public void FireBall()
     {
-        if (m_shotwait % 5 == 0)
+        if (m_shotwait % 8 == 0)
         {
             prefav = Instantiate(shot, transform.position, transform.rotation) as GameObject;
             m_shotwait = 0;
