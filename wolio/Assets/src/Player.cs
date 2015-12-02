@@ -8,6 +8,8 @@ using UnityStandardAssets.CrossPlatformInput;
 public class Player : MonoBehaviour
 {
     public int m_hp = 1;
+
+    GameObject m_Gameover;
     
     public GameObject shot;
     public GameObject prefav;
@@ -42,6 +44,7 @@ public class Player : MonoBehaviour
         m_GroundCheck = transform.Find("GroundCheck");
         m_Rigidbody2D = GetComponent<Rigidbody2D>();
         m_transform = GetComponent<Transform>();
+        m_Gameover = (GameObject)Resources.Load("Prefab/gameover");
     }
 
     private void Start()
@@ -74,8 +77,8 @@ public class Player : MonoBehaviour
 
     void UpdateAsObservables ()
     {
-        //this.UpdateAsObservable()
-        //    .Subscribe(_ => m_Grounded = Physics2D.Linecast(this.transform.position, m_GroundCheck.transform.position));
+        this.UpdateAsObservable()
+            .Subscribe(_ => Die());
     }
 
     void OnTriggerEnter2DAsObservables ()
@@ -236,6 +239,16 @@ public class Player : MonoBehaviour
         }
 
         m_shotwait++;
+    }
+
+    public void Die()
+    {
+        if(transform.position.y <= -5)
+        {
+            Debug.Log("aaaa");
+            Instantiate(m_Gameover);
+            Destroy(gameObject);
+        }
     }
 
     private void Flip()
