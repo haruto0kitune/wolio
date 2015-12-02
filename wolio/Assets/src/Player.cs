@@ -8,8 +8,9 @@ using UnityStandardAssets.CrossPlatformInput;
 public class Player : MonoBehaviour
 {
     public int m_hp = 1;
-    private int m_shotwait;
 
+    GameObject m_Gameover;
+    
     public GameObject shot;
     public GameObject prefav;
     private Transform m_GroundCheck;    // A position marking where to check if the player is grounded.
@@ -17,9 +18,15 @@ public class Player : MonoBehaviour
     private Rigidbody2D m_Rigidbody2D;
     public bool m_Grounded = false;            // Whether or not the player is grounded.
     private bool m_FacingRight = true;  // For determining which way the player is currently facing.
+
+    public bool GetFacingRight
+    {
+        get { return this.m_FacingRight; }
+    }
+
     const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
-    const float k_CeilingRadius = .01f; // Radius of the overlap circle to determine if the player can stand up
     public bool m_isDashing = false;
+    private int m_shotwait = 0;
 
     [SerializeField]
     private float m_MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
@@ -37,6 +44,7 @@ public class Player : MonoBehaviour
         m_GroundCheck = transform.Find("GroundCheck");
         m_Rigidbody2D = GetComponent<Rigidbody2D>();
         m_transform = GetComponent<Transform>();
+        m_Gameover = (GameObject)Resources.Load("Prefab/gameover");
     }
 
     private void Start()
@@ -69,8 +77,8 @@ public class Player : MonoBehaviour
 
     void UpdateAsObservables ()
     {
-        //this.UpdateAsObservable()
-        //    .Subscribe(_ => m_Grounded = Physics2D.Linecast(this.transform.position, m_GroundCheck.transform.position));
+        this.UpdateAsObservable()
+            .Subscribe(_ => Die());
     }
 
     void OnTriggerEnter2DAsObservables ()
@@ -224,13 +232,23 @@ public class Player : MonoBehaviour
 
     public void FireBall()
     {
-        if (m_shotwait % 5 == 0)
+        if (m_shotwait % 8 == 0)
         {
             prefav = Instantiate(shot, transform.position, transform.rotation) as GameObject;
             m_shotwait = 0;
         }
 
         m_shotwait++;
+    }
+
+    public void Die()
+    {
+        if(transform.position.y <= -5)
+        {
+            Debug.Log("aaaa");
+            Instantiate(m_Gameover);
+            Destroy(gameObject);
+        }
     }
 
     private void Flip()
