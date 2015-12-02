@@ -1368,6 +1368,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d83bf3ee954a2fe43a431d89d20386d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &988100583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 988100576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d53a65bea1ae2349861be15e52bf38b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_hp: 5
 --- !u!1 &1039123310
 GameObject:
   m_ObjectHideFlags: 0
@@ -1821,6 +1833,10 @@ Prefab:
     - target: {fileID: 179794, guid: 0a7b465134f06ff44b5e28a901aafbc3, type: 2}
       propertyPath: m_Layer
       value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 179794, guid: 0a7b465134f06ff44b5e28a901aafbc3, type: 2}
+      propertyPath: m_TagString
+      value: Obstacle
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0a7b465134f06ff44b5e28a901aafbc3, type: 2}
