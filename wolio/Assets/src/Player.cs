@@ -16,6 +16,12 @@ public class Player : MonoBehaviour
     private Rigidbody2D m_Rigidbody2D;
     public bool m_Grounded = false;            // Whether or not the player is grounded.
     private bool m_FacingRight = true;  // For determining which way the player is currently facing.
+
+    public bool GetFacingRight
+    {
+        get { return this.m_FacingRight; }
+    }
+
     const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
     public bool m_isDashing = false;
     private int m_shotwait = 0;
