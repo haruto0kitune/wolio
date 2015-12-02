@@ -1044,6 +1044,10 @@ Prefab:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 114850, guid: 8126429e5204547499c807498856c327, type: 2}
+      propertyPath: m_TagString
+      value: Obstacle
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 8126429e5204547499c807498856c327, type: 2}
   m_IsPrefabParent: 0
