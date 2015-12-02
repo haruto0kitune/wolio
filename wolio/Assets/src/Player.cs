@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
     public int m_hp = 1;
 
     GameObject m_Gameover;
+    GameObject m_GameoverInstance;
     
     public GameObject shot;
     public GameObject prefav;
@@ -141,6 +142,8 @@ public class Player : MonoBehaviour
         this.ObserveEveryValueChanged(x => x.m_hp)
             .Where(x => m_hp == 0)
             .Subscribe(_ => Destroy(GameObject.Find("hp1")));
+
+
     }
 
     public void Dash(float direction, bool shift)
@@ -243,10 +246,9 @@ public class Player : MonoBehaviour
 
     public void Die()
     {
-        if(transform.position.y <= -5)
+        if((transform.position.y <= -5 || m_hp <= 0) && m_GameoverInstance == null)
         {
-            Debug.Log("aaaa");
-            Instantiate(m_Gameover);
+            m_GameoverInstance = Instantiate(m_Gameover) as GameObject;
             Destroy(gameObject);
         }
     }
