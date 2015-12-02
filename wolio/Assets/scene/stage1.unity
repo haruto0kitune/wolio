@@ -1146,7 +1146,7 @@ GameObject:
   - 95: {fileID: 911366927}
   - 58: {fileID: 911366931}
   m_Layer: 8
-  m_Name: Sprite-0003
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
