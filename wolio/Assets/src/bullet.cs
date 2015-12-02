@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class bullet : MonoBehaviour
+public class Bullet : MonoBehaviour
 {
     private GameObject m_Camera;
 
@@ -16,6 +16,14 @@ public class bullet : MonoBehaviour
     {
         transform.position = new Vector3(transform.position.x + 0.1f, transform.position.y, transform.position.z);
         Release();
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if((other.gameObject.tag == "Enemy") || (other.gameObject.tag == "Obstacle"))
+        {
+            Destroy(gameObject);
+        }
     }
 
     void Release()

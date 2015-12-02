@@ -8,8 +8,7 @@ using UnityStandardAssets.CrossPlatformInput;
 public class Player : MonoBehaviour
 {
     public int m_hp = 1;
-    private int m_shotwait;
-
+    
     public GameObject shot;
     public GameObject prefav;
     private Transform m_GroundCheck;    // A position marking where to check if the player is grounded.
@@ -18,8 +17,8 @@ public class Player : MonoBehaviour
     public bool m_Grounded = false;            // Whether or not the player is grounded.
     private bool m_FacingRight = true;  // For determining which way the player is currently facing.
     const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
-    const float k_CeilingRadius = .01f; // Radius of the overlap circle to determine if the player can stand up
     public bool m_isDashing = false;
+    private int m_shotwait = 0;
 
     [SerializeField]
     private float m_MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
