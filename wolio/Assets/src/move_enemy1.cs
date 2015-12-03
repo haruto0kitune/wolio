@@ -19,28 +19,6 @@ public class move_enemy1 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        /*switch (counter)
-        {
-            case 0:
-                LeftMove();
-                break;
-            case 1:
-                LeftMove();
-                break;
-            case 2:
-                LeftMove();
-                break;
-            case 3:
-                RightMove();
-                break;
-            case 4:
-                RightMove();
-                break;
-            case 5:
-                RightMove();
-                break;
-        }*/
-
         if (counter >= 0 && counter <= 29)
         {
             LeftMove();

@@ -24,51 +24,63 @@ public class PlayerControl : MonoBehaviour
 
     private void Start()
     {
-        this.UpdateAsObservable()
-            .Subscribe(_ =>
-            {
-                m_left = CrossPlatformInputManager.GetButton("Left");
-                m_right = CrossPlatformInputManager.GetButton("Right");
-                m_Direction = CrossPlatformInputManager.GetAxisRaw("Horizontal");
+        FixedUpdateAsObservables();
+        UpdateAsObservables();
+    }
 
-                if ((CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right")) && CrossPlatformInputManager.GetButton("Left Shift"))
-                {
-                    m_Dash = true;
-                }
-                else
-                {
-                    m_Dash = false;
-                }
-
-                if (!m_Jump)
-                {
-                    m_Jump = CrossPlatformInputManager.GetButtonDown("Jump");
-                }
-
-                m_Attack = CrossPlatformInputManager.GetButton("Attack");
-
-                m_LeftShift = CrossPlatformInputManager.GetButton("Left Shift");
-            });
+    private void FixedUpdateAsObservables()
+    {
+        this.FixedUpdateAsObservable()
+            .Where(x => m_Attack == true)
+            .Subscribe(_ => m_Character.FireBall());
 
         this.FixedUpdateAsObservable()
-            .Subscribe(_ =>
-            {
-                if (m_Attack)
-                {
-                    m_Character.FireBall();
-                }
+            .Where(x => (m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded)
+            .Subscribe(_ => m_Character.Dash(m_Direction, m_LeftShift));
 
-                if ((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded)
-                {
-                    m_Character.Dash(m_Direction, m_LeftShift);
-                }
-                else
-                {
-                    m_Character.TurnAround(m_Direction);
-                    m_Character.Run(m_Direction);
-                    m_Character.Jump(m_Jump);
-                    m_Jump = false;
-                }
-            });
+        this.FixedUpdateAsObservable()
+            .Where(x => !((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded))
+            .Subscribe(_ => m_Character.TurnAround(m_Direction));
+
+        this.FixedUpdateAsObservable()
+            .Where(x => !((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded))
+            .Subscribe(_ => m_Character.Run(m_Direction));
+
+        this.FixedUpdateAsObservable()
+            .Where(x => !((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded))
+            .Subscribe(_ => m_Character.Jump(m_Jump));
+
+        this.FixedUpdateAsObservable()
+            .Subscribe(_ => m_Jump = false);
+    }
+
+    private void UpdateAsObservables()
+    {
+        this.UpdateAsObservable()
+            .Subscribe(_ => m_left = CrossPlatformInputManager.GetButton("Left"));
+
+        this.UpdateAsObservable()
+            .Subscribe(_ => m_right = CrossPlatformInputManager.GetButton("Right"));
+
+        this.UpdateAsObservable()
+            .Subscribe(_ => m_Direction = CrossPlatformInputManager.GetAxisRaw("Horizontal"));
+
+        this.UpdateAsObservable()
+            .Where(x => (CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right")) && CrossPlatformInputManager.GetButton("Left Shift"))
+            .Subscribe(_ => m_Dash = true);
+
+        this.UpdateAsObservable()
+            .Where(x => !(CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right")) && CrossPlatformInputManager.GetButton("Left Shift"))
+            .Subscribe(_ => m_Dash = false);
+
+        this.UpdateAsObservable()
+            .Where(x => !m_Jump)
+            .Subscribe(_ => m_Jump = CrossPlatformInputManager.GetButtonDown("Jump"));
+
+        this.UpdateAsObservable()
+            .Subscribe(_ => m_Attack = CrossPlatformInputManager.GetButton("Attack"));
+
+        this.UpdateAsObservable()
+            .Subscribe(_ => m_LeftShift = CrossPlatformInputManager.GetButton("Left Shift"));
     }
 }

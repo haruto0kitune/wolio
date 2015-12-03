@@ -142,8 +142,6 @@ public class Player : MonoBehaviour
         this.ObserveEveryValueChanged(x => x.m_hp)
             .Where(x => m_hp == 0)
             .Subscribe(_ => Destroy(GameObject.Find("hp1")));
-
-
     }
 
     public void Dash(float direction, bool shift)
@@ -181,7 +179,7 @@ public class Player : MonoBehaviour
         {
             for (int i = 0; i < 5; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i), m_Rigidbody2D.velocity.y);
+                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
@@ -190,7 +188,7 @@ public class Player : MonoBehaviour
         {
             for (int i = 0; i < 5; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i), m_Rigidbody2D.velocity.y);
+                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
