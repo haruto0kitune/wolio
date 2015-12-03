@@ -15,10 +15,37 @@ public class camera : MonoBehaviour
         this.UpdateAsObservable()
             .Subscribe(_ =>
             {
-                this.transform.position = new Vector3(player.transform.position.x, 0, -10);
+                //this.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10);
 
+                /*if (0 <= transform.position.x && transform.position.x <= 12) transform.position = new Vector3(player.transform.position.x, 0, -10);
+                if (0 <= transform.position.y && transform.position.y <= 11) transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10);
                 if (transform.position.x < 0) transform.position = new Vector3(0, 0, -10);
-                else if (transform.position.x >= 12) transform.position = new Vector3(12, 0, -10);
+                else if (transform.position.x >= 12) transform.position = new Vector3(12, 0, -10);*/
+
+                if (0 > player.transform.position.x && 0 > player.transform.position.y)
+                {
+                    transform.position = new Vector3(0, 0, -10);
+                }
+                else if (0 > player.transform.position.x && 0 <= player.transform.position.y)
+                {
+                    transform.position = new Vector3(0, player.transform.position.y, -10);
+                }
+                else if ((0 < player.transform.position.x && player.transform.position.x <= 12) && 0 > player.transform.position.y)
+                {
+                    transform.position = new Vector3(player.transform.position.x, 0, -10);
+                }
+                else if ((0 < player.transform.position.x && player.transform.position.x <= 12) && (0 < player.transform.position.y && player.transform.position.y <= 11))
+                {
+                    transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10);
+                }
+                else if (12 <= player.transform.position.x && player.transform.position.y > 0)
+                {
+                    transform.position = new Vector3(12, player.transform.position.y, -10);
+                }
+                else if (player.transform.position.x >= 12 && player.transform.position.y <= 0)
+                {
+                    transform.position = new Vector3(12, 0, -10);
+                }
             });
     }
 }
