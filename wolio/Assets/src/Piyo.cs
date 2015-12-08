@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UniRx;
+using UniRx.Triggers;
 
 public class Piyo : MonoBehaviour
 {
-    [SerializeField]
-    private int m_hp;
     [SerializeField]
     private float m_JumpForce;
     [SerializeField]
@@ -12,60 +12,43 @@ public class Piyo : MonoBehaviour
     [SerializeField]
     private float m_MaxSpeed = 10f;
 
+    [InspectorDisplay]
+    public IntReactiveProperty Hp;
+    
     private Rigidbody2D m_Rigidbody2D;
-    private bool m_isRunning;
 
-    // Use this for initialization
-    void Start()
+    void Awake()
     {
         m_Rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
-    void Update()
+    // Use this for initialization
+    void Start()
     {
-        if (m_hp <= 0)
-        {
-            Destroy(gameObject);
-        }
-
-        Run();
-        Jump();
+        this.Hp.Where(x => x <= 0).Subscribe(_ => Destroy(this.gameObject));
+        this.StartCoroutine(Run());
+        this.UpdateAsObservable().Subscribe(_ => Jump());
+        this.OnTriggerEnter2DAsObservable().Where(x => x.gameObject.tag == "Bullet").Subscribe(_ => this.Hp.Value--);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    public IEnumerator Run()
     {
-        if (other.gameObject.tag == "Bullet")
+        while (true)
         {
-            m_hp--;
+            // Move left
+            for (int i = 0; i < 10; i++)
+            {
+                m_Rigidbody2D.velocity = new Vector2(1 * m_MaxSpeed, m_Rigidbody2D.velocity.y);
+                yield return null;
+            }
+
+            // Move right
+            for (int i = 0; i < 10; i++)
+            {
+                m_Rigidbody2D.velocity = new Vector2(-1 * m_MaxSpeed, m_Rigidbody2D.velocity.y);
+                yield return null;
+            }
         }
-    }
-
-    public void Run()
-    {
-        if (!m_isRunning)
-        {
-            StartCoroutine(RunCoroutine());
-        }
-    }
-
-    public IEnumerator RunCoroutine()
-    {
-        m_isRunning = true;
-
-        for(int i = 0;i < 10;i++)
-        {
-            m_Rigidbody2D.velocity = new Vector2(1 * m_MaxSpeed, m_Rigidbody2D.velocity.y);
-            yield return null;
-        }
-
-        for (int i = 0; i < 10; i++)
-        {
-            m_Rigidbody2D.velocity = new Vector2(-1 * m_MaxSpeed, m_Rigidbody2D.velocity.y);
-            yield return null;
-        }
-
-        m_isRunning = false;
     }
 
     public void Jump()
