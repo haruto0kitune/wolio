@@ -3,20 +3,16 @@ using System.Collections;
 
 public class slanting_move_block : MonoBehaviour
 {
-
-    private Transform m_transform;
-
     [SerializeField]
-    private float m_speed = 0.01f;
+    private float speed = 0.01f;
     [SerializeField]
-    private float m_volume = 100;
+    private float volume = 100;
     [SerializeField]
-    private string m_direction = "left";
+    private string direction = "left";
 
     // Use this for initialization
     void Start()
     {
-        m_transform = GetComponent<Transform>();
         StartCoroutine("Move");
     }
 
@@ -24,22 +20,22 @@ public class slanting_move_block : MonoBehaviour
     {
         while (true)
         {
-            switch (m_direction)
+            switch (direction)
             {
                 case "left":
                     {
                         // move left
-                        for (int i = 0; i < m_volume; i++)
+                        for (int i = 0; i < volume; i++)
                         {
-                            m_transform.Translate(Vector3.up * m_speed);
-                            m_transform.Translate(Vector3.left * m_speed);
+                            transform.Translate(Vector3.up * speed);
+                            transform.Translate(Vector3.left * speed);
                             yield return null;
                         }
 
-                        for (int i = 0; i < m_volume; i++)
+                        for (int i = 0; i < volume; i++)
                         {
-                            m_transform.Translate(Vector3.down * m_speed);
-                            m_transform.Translate(Vector3.right * m_speed);
+                            transform.Translate(Vector3.down * speed);
+                            transform.Translate(Vector3.right * speed);
                             yield return null;
                         }
 
@@ -48,17 +44,17 @@ public class slanting_move_block : MonoBehaviour
                 case "right":
                     {
                         // move right
-                        for (int i = 0; i < m_volume; i++)
+                        for (int i = 0; i < volume; i++)
                         {
-                            m_transform.Translate(Vector3.up * m_speed);
-                            m_transform.Translate(Vector3.right * m_speed);
+                            transform.Translate(Vector3.up * speed);
+                            transform.Translate(Vector3.right * speed);
                             yield return null;
                         }
 
-                        for (int i = 0; i < m_volume; i++)
+                        for (int i = 0; i < volume; i++)
                         {
-                            m_transform.Translate(Vector3.down * m_speed);
-                            m_transform.Translate(Vector3.left * m_speed);
+                            transform.Translate(Vector3.down * speed);
+                            transform.Translate(Vector3.left * speed);
                             yield return null;
                         }
 

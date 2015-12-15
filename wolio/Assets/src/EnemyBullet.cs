@@ -3,19 +3,19 @@ using System.Collections;
 using UniRx;
 using UniRx.Triggers;
 
-public class Bullet : MonoBehaviour
+public class EnemyBullet : MonoBehaviour
 {
     private GameObject Camera;
-    private Player Player;
+    private Piyo Piyo;
     private ReactiveProperty<bool> FacingRight;
-    
+
     void Awake()
     {
         Camera = GameObject.Find("Main Camera");
-        Player = GameObject.Find("Player").GetComponent<Player>();
-        FacingRight = new ReactiveProperty<bool>(Player.FacingRight.Value);
+        Piyo = GameObject.FindGameObjectWithTag("Piyo").GetComponent<Piyo>();
+        FacingRight = new ReactiveProperty<bool>(Piyo.FacingRight.Value);
     }
-    
+
     void Start()
     {
         this.UpdateAsObservable()
@@ -31,7 +31,7 @@ public class Bullet : MonoBehaviour
             .Subscribe(_ => Destroy(gameObject));
 
         this.OnTriggerEnter2DAsObservable()
-            .Where(x => (x.gameObject.layer == LayerMask.NameToLayer("Enemy")) || (x.gameObject.tag == "Obstacle"))
+            .Where(x => (x.gameObject.layer == LayerMask.NameToLayer("Player")) || (x.gameObject.tag == "Obstacle"))
             .Subscribe(_ => Destroy(gameObject));
     }
 

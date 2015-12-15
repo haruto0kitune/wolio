@@ -8,6 +8,8 @@ TagManager:
   - Enemy
   - Obstacle
   - Bullet
+  - Piyo
+  - EnemyBullet
   layers:
   - Default
   - TransparentFX
@@ -20,7 +22,7 @@ TagManager:
   - Player
   - Enemy
   - ground
-  - 
+  - EnemyBullet
   - 
   - 
   - 

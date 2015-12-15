@@ -1,20 +1,28 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UniRx;
+using UniRx.Triggers;
 
 public class Gameover : MonoBehaviour
 {
-
-    GameObject m_Camera;
-
-    // Use this for initialization
-    void Start()
+    GameObject Camera;
+    Player Player;
+    
+    void Awake()
     {
-        m_Camera = GameObject.Find("Main Camera");
+        Camera = GameObject.Find("Main Camera");
+        Player = GameObject.Find("Player").GetComponent<Player>();
     }
 
-    // Update is called once per frame
-    void Update()
+    void Start()
     {
-        transform.position = new Vector3(m_Camera.transform.position.x, 0, 0);
+        this.Player
+            .IsDead
+            .Where(x => x)
+            .DistinctUntilChanged()
+            .Subscribe(_ =>
+            {
+                transform.position = new Vector3(Camera.transform.position.x, 0, -1);
+            });
     }
 }

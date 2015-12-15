@@ -7,45 +7,46 @@ using UnityStandardAssets.CrossPlatformInput;
 
 public class Player : MonoBehaviour
 {
-    public int m_hp = 1;
+    [InspectorDisplay]
+    public IntReactiveProperty Hp;
+    public ReactiveProperty<bool> IsDead;
+    public ReactiveProperty<bool> IsGrounded;
+    public ReactiveProperty<bool> IsDashing;
+    public ReactiveProperty<bool> FacingRight;
 
-    GameObject m_Gameover;
-    GameObject m_GameoverInstance;
-    
-    public GameObject shot;
-    public GameObject prefav;
-    private Transform m_GroundCheck;    // A position marking where to check if the player is grounded.
-    private Transform m_transform;
-    private Rigidbody2D m_Rigidbody2D;
-    public bool m_Grounded = false;            // Whether or not the player is grounded.
-    private bool m_FacingRight = true;  // For determining which way the player is currently facing.
+    [SerializeField]
+    private GameObject ShotPrefab;
+    private GameObject Shot;
 
-    public bool GetFacingRight
-    {
-        get { return this.m_FacingRight; }
-    }
+    private Transform GroundCheck;    // A position marking where to check if the player is grounded.
+    private Rigidbody2D Rigidbody2D;
 
     const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
-    public bool m_isDashing = false;
-    private int m_shotwait = 0;
+    private int shotwait = 0;
 
     [SerializeField]
-    private float m_MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
+    private float MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
     [SerializeField]
-    private float m_DashSpeed = 10f;                    
+    private float DashSpeed = 10f;                    
     [SerializeField]
-    private float m_JumpForce = 400f;                  // Amount of force added when the player jumps.
+    private float JumpForce = 400f;                  // Amount of force added when the player jumps.
     [SerializeField]
-    private bool m_AirControl = false;                 // Whether or not a player can steer while jumping;
+    private bool AirControl = false;                 // Whether or not a player can steer while jumping;
     [SerializeField]
-    private LayerMask m_WhatIsGround;                  // A mask determining what is ground to the character
+    private LayerMask WhatIsGround;                  // A mask determining what is ground to the character
 
     private void Awake()
     {
-        m_GroundCheck = transform.Find("GroundCheck");
-        m_Rigidbody2D = GetComponent<Rigidbody2D>();
-        m_transform = GetComponent<Transform>();
-        m_Gameover = (GameObject)Resources.Load("Prefab/gameover");
+        GroundCheck = transform.Find("GroundCheck");
+        Rigidbody2D = GetComponent<Rigidbody2D>();
+        ShotPrefab = Resources.Load("Prefab/fireball") as GameObject;
+
+        this.IsDead = new ReactiveProperty<bool>(false);
+        this.IsGrounded = new ReactiveProperty<bool>(false);
+        this.IsDashing = new ReactiveProperty<bool>(false);
+        this.FacingRight = new ReactiveProperty<bool>(true);
+
+        this.IsDead = this.Hp.Select(x => transform.position.y <= -5 || x <= 0).ToReactiveProperty();
     }
 
     private void Start()
@@ -58,20 +59,20 @@ public class Player : MonoBehaviour
         ObserveEveryValueChangeds();
     }
 
-    void FixedUpdateAsObservables()
+    void FixedUpdateAsObservables ()
     {
         this.FixedUpdateAsObservable()
             .Subscribe(_ =>
             {
-                m_Grounded = false;
+                IsGrounded.Value = false;
 
                 // The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
                 // This can be done using layers instead but Sample Assets will not overwrite your project settings.
-                Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, m_WhatIsGround);
+                Collider2D[] colliders = Physics2D.OverlapCircleAll(GroundCheck.position, k_GroundedRadius, WhatIsGround);
                 for (int i = 0; i < colliders.Length; i++)
                 {
                     if (colliders[i].gameObject != gameObject)
-                        m_Grounded = true;
+                        IsGrounded.Value = true;
                 }
             });
     }
@@ -89,25 +90,25 @@ public class Player : MonoBehaviour
             .Subscribe(_ => transform.parent = _.gameObject.transform);
 
         this.OnTriggerEnter2DAsObservable()
-            .Where(x => x.gameObject.tag == "Enemy")
-            .Subscribe(_ => m_hp--);
+            .Where(x => x.gameObject.layer == LayerMask.NameToLayer("Enemy"))
+            .Subscribe(_ => Hp.Value--);
+
+        this.OnTriggerEnter2DAsObservable()
+            .Where(x => x.gameObject.layer == LayerMask.NameToLayer("EnemyBullet"))
+            .Subscribe(_ => Hp.Value--);
     }
 
     void OnTriggerStay2DAsObservables ()
     {
         this.OnTriggerStay2DAsObservable()
             .Where(x => x.gameObject.tag == "MovingFloor")
-            .Subscribe(_ =>
-            {
-                if (!(CrossPlatformInputManager.GetButton("Left")) && !(CrossPlatformInputManager.GetButton("Right")))
-                {
-                    transform.parent = _.gameObject.transform;
-                }
-                else
-                {
-                    transform.parent = null;
-                }
-            });
+            .Where(x => !CrossPlatformInputManager.GetButton("Left") && !CrossPlatformInputManager.GetButton("Right"))
+            .Subscribe(_ => transform.parent = _.gameObject.transform);
+
+        this.OnTriggerStay2DAsObservable()
+            .Where(x => x.gameObject.tag == "MovingFloor")
+            .Where(x => CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right"))
+            .Subscribe(_ => transform.parent = null);
     }
 
     void OnTriggerExit2DAsObservables ()
@@ -123,30 +124,30 @@ public class Player : MonoBehaviour
             
     void ObserveEveryValueChangeds ()
     {
-        this.ObserveEveryValueChanged(x => x.m_hp)
-            .Where(x => m_hp == 4)
+        this.ObserveEveryValueChanged(x => x.Hp.Value)
+            .Where(x => Hp.Value == 4)
             .Subscribe(_ => Destroy(GameObject.Find("hp5")));
 
-        this.ObserveEveryValueChanged(x => x.m_hp)
-            .Where(x => m_hp == 3)
+        this.ObserveEveryValueChanged(x => x.Hp.Value)
+            .Where(x => Hp.Value == 3)
             .Subscribe(_ => Destroy(GameObject.Find("hp4")));
 
-        this.ObserveEveryValueChanged(x => x.m_hp)
-            .Where(x => m_hp == 2)
+        this.ObserveEveryValueChanged(x => x.Hp.Value)
+            .Where(x => Hp.Value == 2)
             .Subscribe(_ => Destroy(GameObject.Find("hp3")));
 
-        this.ObserveEveryValueChanged(x => x.m_hp)
-            .Where(x => m_hp == 1)
+        this.ObserveEveryValueChanged(x => x.Hp.Value)
+            .Where(x => Hp.Value == 1)
             .Subscribe(_ => Destroy(GameObject.Find("hp2")));
 
-        this.ObserveEveryValueChanged(x => x.m_hp)
-            .Where(x => m_hp == 0)
+        this.ObserveEveryValueChanged(x => x.Hp.Value)
+            .Where(x => Hp.Value == 0)
             .Subscribe(_ => Destroy(GameObject.Find("hp1")));
     }
 
     public void Dash(float direction, bool shift)
     {
-        if ((shift && ((direction < 0) || (direction > 0))) && !m_isDashing)
+        if ((shift && ((direction < 0) || (direction > 0))) && !IsDashing.Value)
         {
             StartCoroutine(DashCoroutine(direction, shift));
         }
@@ -154,41 +155,41 @@ public class Player : MonoBehaviour
 
     public IEnumerator DashCoroutine(float direction, bool shift)
     {
-        m_isDashing = true;
+        IsDashing.Value = true;
 
         //right backdash
-        if (m_FacingRight && ((direction < 0) && shift))
+        if (FacingRight.Value && ((direction < 0) && shift))
         {
             for (int i = 0; i < 5; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
+                Rigidbody2D.velocity = new Vector2(direction * (DashSpeed - i * 2), Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
         //right frontdash
-        else if (m_FacingRight && ((direction > 0) && shift))
+        else if (FacingRight.Value && ((direction > 0) && shift))
         {
             for (int i = 0; i < 5; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
+                Rigidbody2D.velocity = new Vector2(direction * (DashSpeed - i * 2), Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
         //left frontdash
-        else if (!m_FacingRight && ((direction < 0) && shift))
+        else if (!FacingRight.Value && ((direction < 0) && shift))
         {
             for (int i = 0; i < 5; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
+                Rigidbody2D.velocity = new Vector2(direction * (DashSpeed - i * 2), Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
         //left backdash
-        else if (!m_FacingRight && ((direction > 0) && shift))
+        else if (!FacingRight.Value && ((direction > 0) && shift))
         {
             for (int i = 0; i < 5; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(direction * (m_DashSpeed - i * 2), m_Rigidbody2D.velocity.y);
+                Rigidbody2D.velocity = new Vector2(direction * (DashSpeed - i * 2), Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
@@ -199,13 +200,13 @@ public class Player : MonoBehaviour
             yield return null;
         }
 
-        m_isDashing = false;
+        IsDashing.Value = false;
         yield return null;
     }
 
     public void TurnAround(float direction)
     {
-        if ((direction > 0 && !m_FacingRight) || (direction < 0 && m_FacingRight))
+        if ((direction > 0 && !FacingRight.Value) || (direction < 0 && FacingRight.Value))
         {
             Flip();
         }
@@ -214,47 +215,46 @@ public class Player : MonoBehaviour
     public void Run(float direction)
     {
         //only control the player if grounded or airControl is turned on
-        if (m_Grounded || m_AirControl)
+        if (IsGrounded.Value || AirControl)
         {
             // Move the character
-            m_Rigidbody2D.velocity = new Vector2(direction * m_MaxSpeed, m_Rigidbody2D.velocity.y);
+            Rigidbody2D.velocity = new Vector2(direction * MaxSpeed, Rigidbody2D.velocity.y);
         }
     }
 
     public void Jump(bool jump)
     {
         // If the player should jump...
-        if ((bool)Physics2D.Linecast(this.transform.position, new Vector2(this.transform.position.x, this.transform.position.y - 0.539f), /*m_ground*/m_WhatIsGround) && jump)
+        if ((bool)Physics2D.Linecast(this.transform.position, new Vector2(this.transform.position.x, this.transform.position.y - 0.539f), /*ground*/WhatIsGround) && jump)
         {
             // Add a vertical force to the player.
-            m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
+            Rigidbody2D.AddForce(new Vector2(0f, JumpForce));
         }
     }
 
     public void FireBall()
     {
-        if (m_shotwait % 8 == 0)
+        if (shotwait == 8)
         {
-            prefav = Instantiate(shot, transform.position, transform.rotation) as GameObject;
-            m_shotwait = 0;
+            Shot = Instantiate(ShotPrefab, transform.position, transform.rotation) as GameObject;
+            shotwait = 0;
         }
 
-        m_shotwait++;
+        shotwait++;
     }
 
     public void Die()
     {
-        if((transform.position.y <= -5 || m_hp <= 0) && m_GameoverInstance == null)
+        if((transform.position.y <= -5 || Hp.Value <= 0))
         {
-            m_GameoverInstance = Instantiate(m_Gameover) as GameObject;
-            Destroy(gameObject);
+            Debug.Log(this.IsDead.Value);
         }
     }
 
     private void Flip()
     {
         // Switch the way the player is labelled as facing.
-        m_FacingRight = !m_FacingRight;
+        FacingRight.Value = !FacingRight.Value;
 
         // Multiply the player's x local scale by -1.
         Vector3 theScale = transform.localScale;

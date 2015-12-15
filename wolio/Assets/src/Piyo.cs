@@ -6,29 +6,63 @@ using UniRx.Triggers;
 public class Piyo : MonoBehaviour
 {
     [SerializeField]
-    private float m_JumpForce;
+    private float JumpForce;
     [SerializeField]
-    private LayerMask m_WhatIsGround;
+    private LayerMask WhatIsGround;
     [SerializeField]
-    private float m_MaxSpeed = 10f;
+    private float MaxSpeed = 10f;
+
+    private GameObject Shot;
+    [SerializeField]
+    private GameObject ShotPrefab;
+
+    private int shotwait;
+    [SerializeField]
+    private bool CanAttack;
 
     [InspectorDisplay]
     public IntReactiveProperty Hp;
+    public ReactiveProperty<bool> IsGrounded;
+    public ReactiveProperty<bool> FacingRight;
     
-    private Rigidbody2D m_Rigidbody2D;
+    private Rigidbody2D Rigidbody2D;
 
     void Awake()
     {
-        m_Rigidbody2D = GetComponent<Rigidbody2D>();
+        Rigidbody2D = GetComponent<Rigidbody2D>();
+        IsGrounded = new ReactiveProperty<bool>(false);
+        FacingRight = new ReactiveProperty<bool>(false);
     }
 
     // Use this for initialization
     void Start()
     {
-        this.Hp.Where(x => x <= 0).Subscribe(_ => Destroy(this.gameObject));
+        this.Hp
+            .Where(x => x <= 0)
+            .Subscribe(_ => Destroy(gameObject));
+
+        this.UpdateAsObservable()
+            .Where(x => IsGrounded.Value)
+            .Subscribe(_ => Jump());
+
+        this.UpdateAsObservable()
+            .Subscribe(_ =>
+            {
+                this.IsGrounded.Value = (bool)Physics2D.Linecast(
+                    this.transform.position,
+                    new Vector2(this.transform.position.x, this.transform.position.y - 0.539f),
+                    WhatIsGround);
+            });
+
         this.StartCoroutine(Run());
-        this.UpdateAsObservable().Subscribe(_ => Jump());
-        this.OnTriggerEnter2DAsObservable().Where(x => x.gameObject.tag == "Bullet").Subscribe(_ => this.Hp.Value--);
+
+        this.OnTriggerEnter2DAsObservable()
+            .Where(x => x.gameObject.tag == "Bullet")
+            .Subscribe(_ => this.Hp.Value--);
+
+        this.UpdateAsObservable()
+            .Where(x => CanAttack)
+            .Subscribe(_ => FireBall());
     }
 
     public IEnumerator Run()
@@ -38,14 +72,14 @@ public class Piyo : MonoBehaviour
             // Move left
             for (int i = 0; i < 10; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(1 * m_MaxSpeed, m_Rigidbody2D.velocity.y);
+                Rigidbody2D.velocity = new Vector2(1 * MaxSpeed, Rigidbody2D.velocity.y);
                 yield return null;
             }
 
             // Move right
             for (int i = 0; i < 10; i++)
             {
-                m_Rigidbody2D.velocity = new Vector2(-1 * m_MaxSpeed, m_Rigidbody2D.velocity.y);
+                Rigidbody2D.velocity = new Vector2(-1 * MaxSpeed, Rigidbody2D.velocity.y);
                 yield return null;
             }
         }
@@ -53,11 +87,28 @@ public class Piyo : MonoBehaviour
 
     public void Jump()
     {
-        // If the player should jump...
-        if ((bool)Physics2D.Linecast(this.transform.position, new Vector2(this.transform.position.x, this.transform.position.y - 0.539f), m_WhatIsGround))
+        Rigidbody2D.AddForce(new Vector2(0f, JumpForce));
+    }
+
+    public void FireBall()
+    {
+        if (shotwait == 60)
         {
-            // Add a vertical force to the player.
-            m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
+            Shot = Instantiate(ShotPrefab, transform.position, transform.rotation) as GameObject;
+            shotwait = 0;
         }
+
+        shotwait++;
+    }
+
+    private void Flip()
+    {
+        // Switch the way the player is labelled as facing.
+        FacingRight.Value = !FacingRight.Value;
+
+        // Multiply the player's x local scale by -1.
+        Vector3 theScale = transform.localScale;
+        theScale.x *= -1;
+        transform.localScale = theScale;
     }
 }

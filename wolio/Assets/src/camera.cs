@@ -15,13 +15,6 @@ public class camera : MonoBehaviour
         this.UpdateAsObservable()
             .Subscribe(_ =>
             {
-                //this.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10);
-
-                /*if (0 <= transform.position.x && transform.position.x <= 12) transform.position = new Vector3(player.transform.position.x, 0, -10);
-                if (0 <= transform.position.y && transform.position.y <= 11) transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -10);
-                if (transform.position.x < 0) transform.position = new Vector3(0, 0, -10);
-                else if (transform.position.x >= 12) transform.position = new Vector3(12, 0, -10);*/
-
                 if (0 > player.transform.position.x && 0 > player.transform.position.y)
                 {
                     transform.position = new Vector3(0, 0, -10);

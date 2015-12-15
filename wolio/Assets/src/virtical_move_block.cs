@@ -1,19 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class virtical_move_block : MonoBehaviour {
-
-    Transform m_transform;
-    
+public class virtical_move_block : MonoBehaviour
+{
     [SerializeField]
-    private float m_movement = 0.01f;
+    private float movement = 0.01f;
 
     void Start()
     {
-        m_transform = GetComponent<Transform>();
         StartCoroutine("Move");
     }
- 
+
     IEnumerator Move()
     {
         while (true)
@@ -21,14 +18,14 @@ public class virtical_move_block : MonoBehaviour {
             // move up
             for (int i = 0; i < 200; i++)
             {
-                m_transform.Translate(Vector3.up * m_movement);
+                base.transform.Translate(Vector3.up * movement);
                 yield return null;
             }
 
             // move down
             for (int i = 0; i < 200; i++)
             {
-                m_transform.Translate(Vector3.down * m_movement);
+                base.transform.Translate(Vector3.down * movement);
                 yield return null;
             }
         }

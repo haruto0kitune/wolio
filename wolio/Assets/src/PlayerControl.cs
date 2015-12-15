@@ -7,19 +7,19 @@ using UniRx.Triggers;
 [RequireComponent(typeof(Player))]
 public class PlayerControl : MonoBehaviour
 {
-    private Player m_Character;
-    private float m_Direction;
-    private bool m_Jump;
-    private bool m_Attack;
-    private bool m_Dash;
-    private bool m_LeftShift;
-    private bool m_RightShift;
-    private bool m_left;
-    private bool m_right;
+    private Player Character;
+    private float Direction;
+    private bool Jump;
+    private bool Attack;
+    private bool Dash;
+    private bool LeftShift;
+    private bool RightShift;
+    private bool left;
+    private bool right;
    
     private void Awake()
     {
-        m_Character = GetComponent<Player>();
+        Character = GetComponent<Player>();
     }
 
     private void Start()
@@ -31,56 +31,56 @@ public class PlayerControl : MonoBehaviour
     private void FixedUpdateAsObservables()
     {
         this.FixedUpdateAsObservable()
-            .Where(x => m_Attack == true)
-            .Subscribe(_ => m_Character.FireBall());
+            .Where(x => Attack == true)
+            .Subscribe(_ => Character.FireBall());
 
         this.FixedUpdateAsObservable()
-            .Where(x => (m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded)
-            .Subscribe(_ => m_Character.Dash(m_Direction, m_LeftShift));
+            .Where(x => (Dash || Character.IsDashing.Value) && Character.IsGrounded.Value)
+            .Subscribe(_ => Character.Dash(Direction, LeftShift));
 
         this.FixedUpdateAsObservable()
-            .Where(x => !((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded))
-            .Subscribe(_ => m_Character.TurnAround(m_Direction));
+            .Where(x => !((Dash || Character.IsDashing.Value) && Character.IsGrounded.Value))
+            .Subscribe(_ => Character.TurnAround(Direction));
 
         this.FixedUpdateAsObservable()
-            .Where(x => !((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded))
-            .Subscribe(_ => m_Character.Run(m_Direction));
+            .Where(x => !((Dash || Character.IsDashing.Value) && Character.IsGrounded.Value))
+            .Subscribe(_ => Character.Run(Direction));
 
         this.FixedUpdateAsObservable()
-            .Where(x => !((m_Dash || m_Character.m_isDashing) && m_Character.m_Grounded))
-            .Subscribe(_ => m_Character.Jump(m_Jump));
+            .Where(x => !((Dash || Character.IsDashing.Value) && Character.IsGrounded.Value))
+            .Subscribe(_ => Character.Jump(Jump));
 
         this.FixedUpdateAsObservable()
-            .Subscribe(_ => m_Jump = false);
+            .Subscribe(_ => Jump = false);
     }
 
     private void UpdateAsObservables()
     {
         this.UpdateAsObservable()
-            .Subscribe(_ => m_left = CrossPlatformInputManager.GetButton("Left"));
+            .Subscribe(_ => left = CrossPlatformInputManager.GetButton("Left"));
 
         this.UpdateAsObservable()
-            .Subscribe(_ => m_right = CrossPlatformInputManager.GetButton("Right"));
+            .Subscribe(_ => right = CrossPlatformInputManager.GetButton("Right"));
 
         this.UpdateAsObservable()
-            .Subscribe(_ => m_Direction = CrossPlatformInputManager.GetAxisRaw("Horizontal"));
+            .Subscribe(_ => Direction = CrossPlatformInputManager.GetAxisRaw("Horizontal"));
 
         this.UpdateAsObservable()
             .Where(x => (CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right")) && CrossPlatformInputManager.GetButton("Left Shift"))
-            .Subscribe(_ => m_Dash = true);
+            .Subscribe(_ => Dash = true);
 
         this.UpdateAsObservable()
             .Where(x => !(CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right")) && CrossPlatformInputManager.GetButton("Left Shift"))
-            .Subscribe(_ => m_Dash = false);
+            .Subscribe(_ => Dash = false);
 
         this.UpdateAsObservable()
-            .Where(x => !m_Jump)
-            .Subscribe(_ => m_Jump = CrossPlatformInputManager.GetButtonDown("Jump"));
+            .Where(x => !Jump)
+            .Subscribe(_ => Jump = CrossPlatformInputManager.GetButtonDown("Jump"));
 
         this.UpdateAsObservable()
-            .Subscribe(_ => m_Attack = CrossPlatformInputManager.GetButton("Attack"));
+            .Subscribe(_ => Attack = CrossPlatformInputManager.GetButton("Attack"));
 
         this.UpdateAsObservable()
-            .Subscribe(_ => m_LeftShift = CrossPlatformInputManager.GetButton("Left Shift"));
+            .Subscribe(_ => LeftShift = CrossPlatformInputManager.GetButton("Left Shift"));
     }
 }

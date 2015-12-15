@@ -5,46 +5,36 @@ using System.Collections;
 
 public class move_enemy1 : MonoBehaviour
 {
-
-    private Transform m_transform;
     private int counter;
     private int i;
 
     // Use this for initialization
     void Start()
     {
-        m_transform = GetComponent<Transform>();
-    }
+        this.UpdateAsObservable()
+            .Where(x => counter >= 0 && counter <= 29)
+            .Subscribe(_ => LeftMove());
 
-    // Update is called once per frame
-    void Update()
-    {
-        if (counter >= 0 && counter <= 29)
-        {
-            LeftMove();
-        }
-        else if (counter >= 29 && counter <= 59)
-        {
-            RightMove();
-        }
+        this.UpdateAsObservable()
+            .Where(x => counter >= 29 && counter <= 59)
+            .Subscribe(_ => RightMove());
 
-        if (counter == 60)
-        {
-            counter = 0;
-        }
+        this.ObserveEveryValueChanged(x => x.counter)
+            .Where(x => x == 60)
+            .Subscribe(_ => counter = 0);
     }
 
     void LeftMove()
     {
-        Vector3 v = m_transform.position;
-        m_transform.position = new Vector3(v.x - 0.03f, v.y, v.z);
+        Vector3 v = transform.position;
+        transform.position = new Vector3(v.x - 0.03f, v.y, v.z);
         counter++;
     }
 
     void RightMove()
     {
-        Vector3 v = m_transform.position;
-        m_transform.position = new Vector3(v.x + 0.03f, v.y, v.z);
+        Vector3 v = transform.position;
+        transform.position = new Vector3(v.x + 0.03f, v.y, v.z);
         counter++;
     }
 }
