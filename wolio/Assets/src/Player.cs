@@ -1,17 +1,18 @@
 ﻿using UnityEngine;
 using UniRx;
 using UniRx.Triggers;
-using System;
 using System.Collections;
-using UnityStandardAssets.CrossPlatformInput;
+using System.Linq;
 
 public class Player : MonoBehaviour
 {
     [InspectorDisplay]
     public IntReactiveProperty Hp;
+
     public ReactiveProperty<bool> IsDead;
     public ReactiveProperty<bool> IsGrounded;
     public ReactiveProperty<bool> IsDashing;
+    public ReactiveProperty<bool> IsTouchingWall;
     public ReactiveProperty<bool> FacingRight;
 
     [SerializeField]
@@ -22,10 +23,13 @@ public class Player : MonoBehaviour
     private Rigidbody2D Rigidbody2D;
 
     const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
+    
     private int shotwait = 0;
 
     [SerializeField]
     private float MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
+    [SerializeField]
+    private float KnockBackSpeed = 3f;
     [SerializeField]
     private float DashSpeed = 10f;                    
     [SerializeField]
@@ -41,27 +45,25 @@ public class Player : MonoBehaviour
         Rigidbody2D = GetComponent<Rigidbody2D>();
         ShotPrefab = Resources.Load("Prefab/fireball") as GameObject;
 
-        this.IsDead = new ReactiveProperty<bool>(false);
-        this.IsGrounded = new ReactiveProperty<bool>(false);
-        this.IsDashing = new ReactiveProperty<bool>(false);
-        this.FacingRight = new ReactiveProperty<bool>(true);
+        IsDead = new ReactiveProperty<bool>(false);
+        IsGrounded = new ReactiveProperty<bool>(false);
+        IsDashing = new ReactiveProperty<bool>(false);
+        IsTouchingWall = new ReactiveProperty<bool>(false);
+        FacingRight = new ReactiveProperty<bool>(true);
 
-        this.IsDead = this.Hp.Select(x => transform.position.y <= -5 || x <= 0).ToReactiveProperty();
+        IsDead = this.Hp.Select(x => transform.position.y <= -5 || x <= 0).ToReactiveProperty();
     }
 
     private void Start()
     {
         UpdateAsObservables();
         FixedUpdateAsObservables();
-        OnTriggerEnter2DAsObservables();
-        OnTriggerStay2DAsObservables();
-        OnTriggerExit2DAsObservables();
         ObserveEveryValueChangeds();
     }
 
     void FixedUpdateAsObservables ()
     {
-        this.FixedUpdateAsObservable()
+        /*this.FixedUpdateAsObservable()
             .Subscribe(_ =>
             {
                 IsGrounded.Value = false;
@@ -74,6 +76,18 @@ public class Player : MonoBehaviour
                     if (colliders[i].gameObject != gameObject)
                         IsGrounded.Value = true;
                 }
+            });*/
+        this.FixedUpdateAsObservable()
+            .Subscribe(_ =>
+            {
+                if ((bool)Physics2D.Linecast(this.transform.position, new Vector2(this.transform.position.x, this.transform.position.y - 0.539f), WhatIsGround))
+                {
+                    IsGrounded.Value = true;
+                }
+                else
+                {
+                    IsGrounded.Value = false;
+                }
             });
     }
 
@@ -81,49 +95,16 @@ public class Player : MonoBehaviour
     {
         this.UpdateAsObservable()
             .Subscribe(_ => Die());
+
+/*        this.UpdateAsObservable()
+            .Subscribe(_ => Gizmos.DrawWireSphere(transform.position, 1.0f));*/
     }
 
-    void OnTriggerEnter2DAsObservables ()
-    {
-        this.OnTriggerEnter2DAsObservable()
-            .Where(x => transform.parent == null && x.gameObject.tag == "MovingFloor" && !(CrossPlatformInputManager.GetButton("Left")) && !(CrossPlatformInputManager.GetButton("Right")))
-            .Subscribe(_ => transform.parent = _.gameObject.transform);
-
-        this.OnTriggerEnter2DAsObservable()
-            .Where(x => x.gameObject.layer == LayerMask.NameToLayer("Enemy"))
-            .Subscribe(_ => Hp.Value--);
-
-        this.OnTriggerEnter2DAsObservable()
-            .Where(x => x.gameObject.layer == LayerMask.NameToLayer("EnemyBullet"))
-            .Subscribe(_ => Hp.Value--);
-    }
-
-    void OnTriggerStay2DAsObservables ()
-    {
-        this.OnTriggerStay2DAsObservable()
-            .Where(x => x.gameObject.tag == "MovingFloor")
-            .Where(x => !CrossPlatformInputManager.GetButton("Left") && !CrossPlatformInputManager.GetButton("Right"))
-            .Subscribe(_ => transform.parent = _.gameObject.transform);
-
-        this.OnTriggerStay2DAsObservable()
-            .Where(x => x.gameObject.tag == "MovingFloor")
-            .Where(x => CrossPlatformInputManager.GetButton("Left") || CrossPlatformInputManager.GetButton("Right"))
-            .Subscribe(_ => transform.parent = null);
-    }
-
-    void OnTriggerExit2DAsObservables ()
-    {
-        this.OnTriggerExit2DAsObservable()
-            .Where(x => transform.parent != null && x.gameObject.tag == "MovingFloor" && (CrossPlatformInputManager.GetButton("Left")) || (CrossPlatformInputManager.GetButton("Right")))
-            .Subscribe(_ => transform.parent = null);
-
-        this.OnTriggerExit2DAsObservable()
-            .Where(x => transform.parent != null && x.gameObject.tag == "MovingFloor")
-            .Subscribe(_ => transform.parent = null);
-    }
-            
     void ObserveEveryValueChangeds ()
     {
+        this.ObserveEveryValueChanged(x => x.Hp.Value)
+            .Subscribe(_ => StartCoroutine(BecomeInvincible()));
+
         this.ObserveEveryValueChanged(x => x.Hp.Value)
             .Where(x => Hp.Value == 4)
             .Subscribe(_ => Destroy(GameObject.Find("hp5")));
@@ -249,6 +230,57 @@ public class Player : MonoBehaviour
         {
             Debug.Log(this.IsDead.Value);
         }
+    }
+
+    public void Guard()
+    {
+        int left = -1;
+        int right = 1;
+
+        if ( FacingRight.Value ) 
+        {
+            Rigidbody2D.velocity = new Vector2(left * KnockBackSpeed, Rigidbody2D.velocity.y);
+        }
+        else if ( !FacingRight.Value )
+        {
+            Rigidbody2D.velocity = new Vector2(right * KnockBackSpeed, Rigidbody2D.velocity.y);
+        }
+        
+    }
+
+    public IEnumerator WallKickJump()
+    {
+        
+        Flip();
+
+        Rigidbody2D.velocity = new Vector2(0.0f, 0.0f);
+        Rigidbody2D.AddForce(new Vector2(500.0f, JumpForce));
+
+        for (int i = 0; i < 15; i++)
+        {
+            Rigidbody2D.AddForce(new Vector2(500.0f, 0.0f));
+            yield return null;
+        }
+    }
+
+    public IEnumerator BecomeInvincible()
+    {
+        // Player become invincible.
+        gameObject.layer = LayerMask.NameToLayer("Invincible");
+
+        // Invincible frames.
+        for(int i = 0;i < 36;i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                yield return null;
+            }
+
+            GetComponent<SpriteRenderer>().enabled = !(GetComponent<SpriteRenderer>().enabled);
+        }
+
+        // Player become normal state.
+        gameObject.layer = LayerMask.NameToLayer("Player");
     }
 
     private void Flip()

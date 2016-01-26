@@ -10,6 +10,8 @@ TagManager:
   - Bullet
   - Piyo
   - EnemyBullet
+  - Splinter
+  - Wall
   layers:
   - Default
   - TransparentFX
@@ -23,9 +25,9 @@ TagManager:
   - Enemy
   - ground
   - EnemyBullet
-  - 
-  - 
-  - 
+  - Splinter
+  - Invincible
+  - Guard
   - 
   - 
   - 

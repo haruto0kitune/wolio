@@ -1,0 +1,16 @@
+Implement WallKickJump
+
+when the following condition is, player can WallKickJump.
+
+1. when player is in the air.
+2. when player touches the wall.
+
+flow chart
+
+when fill the condition, player presses z.
+                |
+player can't control.
+                |
+Player character flips.
+                |
+for n frames, character goes up.
